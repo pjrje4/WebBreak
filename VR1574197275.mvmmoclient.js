@@ -190,10 +190,10 @@ size = 14
 #   hold = set to first value when pressed, to second when released
 #   toggle = cycle through values on each press
 map visible hold yes no = Right Ctrl
-zoom level toggle -1 3000 = Keypad 0
-misc centered toggle 1 2 = Keypad 5
+zoom level toggle -1 3000 = Z
+misc centered toggle 1 2 = B
 playerlist visible hold yes no = V
-ally_opacity opacity toggle 1 0.20 = Keypad .
+ally_opacity opacity toggle 1 0.20 = X
 # show information about triggered keybinds in top left corner, useful for debugging
 info_time = 0
 

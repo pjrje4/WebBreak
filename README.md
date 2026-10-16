@@ -32,8 +32,8 @@ All ten vanilla SBPE plugins are ported, plus `ally_opacity` from Plugin Release
 
 Works in Chrome and Edge (any Chromium browser with DevTools Local Overrides).
 
-1. Download `VR<build>.mvmmoclient.js` from [Releases](../../releases). Its
-   build number must match the game's current client.
+1. Download `VR<build>.mvmmoclient.js` from this folder. Its build number
+   must match the game's current client.
 2. Open the StarBreak web version and press **F12** to open DevTools.
 3. Go to the **Network** tab and reload the page.
 4. Right-click the `VR<build>.mvmmoclient.js` request and choose **Override content**.
@@ -52,18 +52,18 @@ the bottom left of the main menu reads `… + SBPE WebBreak beta by Dr. Jekyll`.
 ### When StarBreak updates
 
 Each game update ships a new client with a new build number in its file
-name. The old WebBreak file then stops applying. Grab the WebBreak release
-for the new build, or [patch it yourself](#patch-it-yourself).
+name. The old WebBreak file then stops applying. You'll need the WebBreak
+release for the new build.
 
 ## Default keybinds
 
 | Key | Action |
 | --- | --- |
 | Right Ctrl | Show map (hold) |
-| Keypad 0 | Toggle zoom |
-| Keypad 5 | Switch centered camera mode |
+| Z | Toggle zoom |
+| B | Switch centered camera mode |
 | V | Show player list (hold) |
-| Keypad . | Toggle ally opacity |
+| X | Toggle ally opacity |
 
 Keybinds are ignored while you're typing in chat.
 
@@ -87,7 +87,7 @@ keybind, add a line to `[plugin_keybinds]`:
 #   set    = set to value when pressed
 #   hold   = first value while held, second when released
 #   toggle = cycle through the values on each press
-zoom level toggle -1 3000 = Keypad 0
+zoom level toggle -1 3000 = Z
 ```
 
 To try settings without editing the file, use the DevTools console. These
@@ -108,26 +108,6 @@ For what each option does, see the comments in the config and
 - `misc` `fixed_window` (borderless window placement) does nothing in a browser.
 - `zoom` `fast` does nothing. The game always does its normal relayout when zooming.
 - `[general]` (game path, mipmaps, keep_open) is not used.
-
-## Patch it yourself
-
-You need [Node.js](https://nodejs.org/), and the vanilla SBPE source in a
-folder named `unmodifiedSBPE` next to this one. The patcher reads SBPE's
-struct definitions and config template from it.
-
-1. Save the game's `VR<build>.mvmmoclient.js` into `input/`. In DevTools,
-   right-click the request and choose **Open in new tab**, then save it.
-2. Double-click `patch.bat`, or run `node patch.js`.
-3. The patched file is written to `output/` under the same name.
-
-The patcher finds everything it needs in the new build automatically: game
-functions, globals and struct layouts. If a game update breaks something, it
-stops and names the step that failed, instead of writing a broken file.
-
-To change the default config or plugins, edit `config.ini` and
-`plugins/*.js`, then re-run the patcher.
-
-For how it works and the plugin API, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Credits
 
