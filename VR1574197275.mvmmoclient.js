@@ -1378,8 +1378,9 @@ sbpe.register('map', Plugin);
 /* ---- plugin: misc ---------------------------------------------------------- */
 WebBreakPlugins.push(function misc(sbpe) {
 'use strict';
-// port of SBPE plugins/misc.py: draw flags, cursor hiding, no autokick,
-// background brightness cap and centered camera.
+// port of SBPE plugins/misc.py: draw flags, cursor hiding, background
+// brightness cap and centered camera. SBPE's autokick disable is left out
+// on purpose, so the game's idle kick works as normal.
 // fixed_window (borderless window placement) has no browser equivalent.
 var mem = WebBreak.mem;
 
@@ -1454,9 +1455,6 @@ class Plugin extends sbpe.PluginBase {
 
     var gc = this.refs.GameClient;
     if (!gc) return;
-
-    // disable autokick
-    gc.sinceKeypress = 0;
 
     // reduce background brightness if needed
     if (this.config.max_bg_value < 1) {
