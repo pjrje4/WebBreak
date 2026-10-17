@@ -73,6 +73,8 @@ Keybinds are ignored while you're typing in chat.
 
 ## Configure
 
+`I have not done much testing modifying the config values.  Proceed with caution.`
+
 The config sits at the very top of the WebBreak file, in SBPE's
 `config.ini` format. To change it:
 
