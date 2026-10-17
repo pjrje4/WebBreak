@@ -200,7 +200,7 @@ info_time = 0
 [plugin_ally_opacity]
 enabled = yes
 # other players: 1 = normal, 0 = invisible
-opacity = 0.3
+opacity = 1
 # also fade objects other players create (not macrons or macron timers)
 fade_ally_objects = yes
 # also fade other players' damage numbers
