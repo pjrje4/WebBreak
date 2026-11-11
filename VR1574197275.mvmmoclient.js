@@ -1,6 +1,6 @@
 /*@WebBreak-patched*/
 /* ========================================================================== */
-/* WebBreak beta by Dr. Jekyll (SBPE plugins for the StarBreak web client)    */
+/* WebBreak beta 2 by Dr. Jekyll (SBPE plugins for the StarBreak web client)  */
 /* for client build 1574197275. to use: Chrome DevTools > Network >           */
 /* right-click VR1574197275.mvmmoclient.js > Override content,                */
 /* paste this whole file in, save, and reload the game with DevTools open.    */
@@ -126,8 +126,13 @@ chest = 08f
 # trigger zones
 trigger_color = 80ff00ff
 trigger_frame = 3
-# object health/armor
-show_hp = no
+# object health/armor numbers (after Alexrns's advanced_hp)
+# enemies and the rest of the server's objects
+show_enemy_hp = no
+# your own objects (drones, shots, ...)
+show_object_hp = no
+# other players
+show_ally_hp = no
 # portal player counts, key counts
 show_uses = yes
 # display zone name and floor number in bottom right corner
@@ -200,13 +205,15 @@ info_time = 0
 [plugin_ally_opacity]
 enabled = yes
 # other players: 1 = normal, 0 = invisible
-opacity = 1
+opacity = 0.3
 # also fade objects other players create (not macrons or macron timers)
 fade_ally_objects = yes
 # also fade other players' damage numbers
 fade_ally_numbers = yes
 # also fade other players' name and faction tags
 fade_ally_names = yes
+# also fade the HP bars over other players' heads
+fade_ally_hp_bars = yes
 # also fade other players' emotes
 fade_ally_emotes = yes
 # keep the HP emote fully visible
@@ -230,16 +237,19 @@ WebBreakPlugins.push(function ally_opacity(sbpe) {
 // port of Plugin Releases/ally_opacity.py (by Dr. Jekyll): makes other
 // players semi-transparent, so you can see what is behind them. their bodies
 // and items fade, and optionally their bullets and drones, damage numbers,
-// name and faction tags, emotes, and hit/impact/trail effects. your own
-// character is never faded. health bars, macrons and macron timers are never
-// faded, the HP emote can stay visible, and ironclads with their shield up or
-// dashing stay fully visible since both block bullets.
+// name and faction tags, emotes, hit/impact/trail effects, and the HP bars
+// over their heads. your own character is never faded. macrons and macron
+// timers are never faded, the HP emote can stay visible, and ironclads with
+// their shield up or dashing stay fully visible since both block bullets.
 //
 // how it works: every sprite is drawn with XDL_DrawTexture, which takes a
 // color/alpha modifier. the game functions that draw one object, damage
 // number, name tag, emote or effect are hooked (patches/50_gamefuncs.js
 // makes them hookable) to remember what is being drawn, and the
 // XDL_DrawTexture hook lowers the alpha when it belongs to another player.
+// the HP bar is not a sprite: WorldView::drawAllyInfo draws it before the
+// name as a 50x5 outline (XDL_DrawRect) and fill (XDL_FillRect), so those
+// two are hooked the same way.
 var util = sbpe.util;
 var mem = WebBreak.mem;
 
@@ -254,6 +264,8 @@ var DASH_ANIMS = [17, 18, 19, 22];  // ironclad dash animations (animprops.animi
 
 // XDL_DrawTexture(texture, sx, sy, sw, sh, dx, dy, dw, dh, rot, rpx, rpy, flip, cmod, blend)
 var CMOD_ARG = 13;
+// XDL_DrawRect / XDL_FillRect(x, y, w, h, color, blend)
+var RECT_COLOR_ARG = 4;
 
 // install all hooks once per page. the state lives on WebBreak, so it
 // survives plugin reloads. the plugin fills st.fade (what to fade), st.alpha,
@@ -269,6 +281,7 @@ function installHooks() {
     emoteTypes: new Map(),  // EmoteIcon address -> EmoteType
     fx: new Set(),          // other players' effects (AnimationGraphic)
     fxAlly: false,          // the effect being created is theirs
+    fadeBars: new Set(),    // player address | NAME_TAG whose HP bar fades
     fadeFx: false, myWorld: 0, mine: new Set()
   };
   if (!WebBreak.funcs['WorldView::drawObject']) {
@@ -355,11 +368,26 @@ function installHooks() {
     var cur = st.current >>> 0;
     return cur && (st.fade.has(cur) || st.fx.has(cur));
   }
-  function fadeCmod(args) {
-    var cmod = args[CMOD_ARG] >>> 0;
+  function fadeColor(args, i) {
+    var cmod = args[i] >>> 0;
     var a = Math.floor(((cmod >>> 24) & 0xff) * st.alpha + 0.5);
-    args[CMOD_ARG] = ((a << 24) | (cmod & 0xffffff)) | 0;
+    args[i] = ((a << 24) | (cmod & 0xffffff)) | 0;
   }
+  function fadeCmod(args) { fadeColor(args, CMOD_ARG); }
+
+  // HP bars: drawn inside the drawAllyInfo hook below (st.current is then the
+  // player's address | NAME_TAG). other rects (plugin overlays) pass through
+  ['XDL_DrawRect', 'XDL_FillRect'].forEach(function (name) {
+    WebBreak.hook(name, function (orig) {
+      var args = rest(arguments);
+      var cur = st.current >>> 0;
+      if (cur & NAME_TAG && st.fadeBars.has(cur)) {
+        if (sbpe.now() - st.t > 0.5) st.fadeBars = new Set();   // plugin is gone
+        else fadeColor(args, RECT_COLOR_ARG);
+      }
+      return orig.apply(null, args);
+    });
+  });
 
   // texture hook first: the others depend on it, not vice versa
   WebBreak.hook('XDL_DrawTexture', function (orig) {
@@ -416,6 +444,7 @@ class Plugin extends sbpe.PluginBase {
       fade_ally_objects: true,
       fade_ally_numbers: true,
       fade_ally_names: true,
+      fade_ally_hp_bars: true,
       fade_ally_emotes: true,
       keep_hp_emote: true,
       fade_ally_effects: true,
@@ -430,6 +459,7 @@ class Plugin extends sbpe.PluginBase {
       if (st) {
         st.fade = new Set();   // stale pointers otherwise
         st.fx = new Set();
+        st.fadeBars = new Set();
       }
       return;
     }
@@ -443,6 +473,7 @@ class Plugin extends sbpe.PluginBase {
     if (opacity >= 1) {
       st.fade = new Set();
       st.fx = new Set();
+      st.fadeBars = new Set();
       st.fadeFx = false;
       return;
     }
@@ -459,6 +490,12 @@ class Plugin extends sbpe.PluginBase {
     if (cfg.fade_ally_names) for (var p of players) fade.add((p | NAME_TAG) >>> 0);
     for (var e of this.allyEmotes(st, allies)) fade.add(e);
     st.fade = fade;
+    // HP bars: same players as the bodies (so blocking ironclads keep theirs)
+    var bars = new Set();
+    if (cfg.fade_ally_hp_bars) {
+      for (var pa of players) if (fade.has(pa)) bars.add((pa | NAME_TAG) >>> 0);
+    }
+    st.fadeBars = bars;
     this.updateEffects(st, cw);
   }
 
@@ -550,7 +587,14 @@ sbpe.register('ally_opacity', Plugin);
 WebBreakPlugins.push(function extra_info(sbpe) {
 'use strict';
 // port of SBPE plugins/extra_info.py: arrows to doors/shops/secrets/etc,
-// trigger zone frames, object hp/armor, use counts and the room id
+// trigger zone frames, object hp/armor, use counts and the room id.
+//
+// HP/armor numbers: SBPE's single show_hp is split into three options, one
+// per kind of object, as in Alexrns's advanced_hp plugin (v1.2.1, its enemy /
+// object / ally options) -- thanks Alexrns:
+//   show_enemy_hp   enemies and everything else in the server's subworld
+//   show_object_hp  objects in your own subworld (your drones, shots, ...)
+//   show_ally_hp    other players
 var util = sbpe.util;
 var mem = WebBreak.mem;
 var lib = sbpe.lib;
@@ -650,7 +694,11 @@ class Plugin extends sbpe.PluginBase {
 
     for (var opt of OPTS) this.config.option('arrows_' + opt[0], opt[1], opt[2]);
 
-    this.config.option('show_hp', false, 'bool');
+    // HP/armor numbers per kind of object (split from show_hp, after
+    // Alexrns's advanced_hp: enemy / object / ally)
+    this.config.option('show_enemy_hp', false, 'bool');
+    this.config.option('show_object_hp', false, 'bool');
+    this.config.option('show_ally_hp', false, 'bool');
     this.config.option('show_uses', true, 'bool');
     this.config.option('show_room_id', true, 'bool');
 
@@ -679,15 +727,19 @@ class Plugin extends sbpe.PluginBase {
     if ((this.refs.CASTABLE.PlayerCharacter || []).indexOf(mem.className(plr.address)) === -1) return;
     plr = mem.cast('PlayerCharacter', plr);
 
-    var objects = util.worldobjects(cw.serverSubWorld)
-      .concat(cw.mySubWorld ? util.worldobjects(cw.mySubWorld.asNativeSubWorld) : [])
-      .concat(mem.vec2list(cw.allies, 'WorldObject*').filter(Boolean));
+    // [object, show its HP?] for enemies, your own objects, other players
+    var cfg = this.config;
+    var tag = show => o => [o, show];
+    var objects = util.worldobjects(cw.serverSubWorld).map(tag(cfg.show_enemy_hp))
+      .concat((cw.mySubWorld ? util.worldobjects(cw.mySubWorld.asNativeSubWorld) : [])
+        .map(tag(cfg.show_object_hp)))
+      .concat(mem.vec2list(cw.allies, 'WorldObject*').filter(Boolean).map(tag(cfg.show_ally_hp)));
 
     var kinds = this.config.arrows.split(/\s+/).filter(Boolean);
     var off = wv.offset, offx = off.x, offy = off.y;
     var canvasW = this.refs.canvasW, canvasH = this.refs.canvasH;
 
-    for (var obj of objects) {
+    for (var [obj, showHp] of objects) {
       var p = obj.props;
       var vid = util.getstr(p.vid);
 
@@ -706,7 +758,7 @@ class Plugin extends sbpe.PluginBase {
       var inbounds = x + w2 > 0 && y + h2 > 0 && x - w2 < canvasW && y - h2 < canvasH;
 
       // object hp/armor (NumberDict draws in canvas coords by default)
-      if (inbounds && this.config.show_hp) {
+      if (inbounds && showHp) {
         if (p.hitpoints >= 0) this.numbers.draw(p.hitpoints, x, y, 0.5, 1);
         else if (p.hitpoints !== -1) this.negnumbers.draw(Math.abs(p.hitpoints), x, y, 0.5, 1);
 
@@ -2010,12 +2062,12 @@ sbpe.register('zoom', Plugin);
 /* WebBreak runtime                                                           */
 /* nothing to edit below here                                                 */
 /* ========================================================================== */
-/* WebBreak runtime beta by Dr. Jekyll (client build 1574197275) */
+/* WebBreak runtime beta 2 by Dr. Jekyll (client build 1574197275) */
 var WebBreak = (function () {
   'use strict';
 
   var WB = {
-    version: 'beta',
+    version: 'beta 2',
     author: 'Dr. Jekyll',
     build: '1574197275',
     asm: null,          // the instantiated asm module (exports)
