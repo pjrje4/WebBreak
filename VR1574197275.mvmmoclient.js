@@ -198,14 +198,14 @@ map visible hold yes no = Right Ctrl
 zoom level toggle -1 3000 = Z
 misc centered toggle 1 2 = B
 playerlist visible hold yes no = V
-ally_opacity opacity toggle 1 0.20 = X
+ally_opacity opacity toggle 1 0.20 0 = X
 # show information about triggered keybinds in top left corner, useful for debugging
 info_time = 0
 
 [plugin_ally_opacity]
 enabled = yes
 # other players: 1 = normal, 0 = invisible
-opacity = 0.3
+opacity = 1
 # also fade objects other players create (not macrons or macron timers)
 fade_ally_objects = yes
 # also fade other players' damage numbers
@@ -221,7 +221,7 @@ keep_hp_emote = yes
 # also fade other players' hit, bullet-impact and trail effects
 fade_ally_effects = yes
 # keep ironclads fully visible while their shield is up or they are dashing
-show_blocking_ironclads = yes
+show_blocking_ironclads = no
 `;
 
 /* ========================================================================== */
