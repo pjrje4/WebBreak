@@ -1,6 +1,6 @@
 # WebBreak
 
-**SBPE plugins for the StarBreak web client.** By Dr. Jekyll. Current version: **beta 2**.
+**SBPE plugins for the StarBreak web client.** By Dr. Jekyll. Current version: **beta**.
 
 [SBPE](https://github.com/atomizer/sbpe) (StarBreak Plugin Engine) adds
 zoom, a map, a custom HUD, an fps counter and more to the desktop StarBreak
@@ -28,7 +28,7 @@ through your browser's DevTools.
 | --- | --- |
 | **zoom** | Renders the game at a different internal width so you see more or less of the world |
 | **map** | Minimap of the room's terrain, enemies, players, interactables and triggers |
-| **extra_info** | Arrows to doors, shops, secrets, arcades, HP and boosts; trigger zone frames; HP/armor numbers for enemies, your own objects and other players (each switched on separately); portal and key counts; zone name and floor |
+| **extra_info** | Arrows to doors, shops, secrets, arcades, HP and boosts; trigger zone frames; object HP/armor; portal and key counts; zone name and floor |
 | **hud** | Large, configurable HP/ammo/currency numbers and a health bar over your character |
 | **noise** | Hides other players' shells, names, factions, health bars, objects and effects, or chat; tones down the damage flash; replaces screen shake with an indicator |
 | **playerlist** | List of players in the zone: shell, mk level, name, faction |
@@ -36,30 +36,34 @@ through your browser's DevTools.
 | **misc** | Centered camera (2 modes), auto-hiding cursor, background brightness cap, the game's built-in debug draw modes |
 | **keybinds** | Bind any plugin option to a key |
 | **version** | Shows the client and WebBreak version on the main menu |
-| **ally_opacity** | Makes other players semi-transparent so you can see what's behind them. Optionally also fades their bullets, drones, damage numbers, names, HP bars, emotes and effects. Ironclads stay solid while their shield is up or they're dashing |
+| **ally_opacity** | Makes other players semi-transparent so you can see what's behind them. Optionally also fades their bullets, drones, damage numbers, names, emotes and effects. Ironclads stay solid while their shield is up or they're dashing |
 
-All ten vanilla SBPE plugins are ported, plus `ally_opacity` from Plugin Releases.
+All ten vanilla SBPE plugins are ported, plus `ally_opacity` for hiding other users.
 
 ## Install
 
 Works in Chrome and Edge (any Chromium browser with DevTools Local Overrides).
 
-1. Download `VR<build>.mvmmoclient.js` from this folder. Its build number
+1. Download `VR1574197275.mvmmoclient.js` from this folder or the releases section on the right side of this page. Its build number
    must match the game's current client.
 2. Open the StarBreak web version and press **F12** to open DevTools.
 3. Go to the **Network** tab and reload the page.
-4. Right-click the `VR<build>.mvmmoclient.js` request and choose **Override content**.
-   The first time, Chrome asks for a folder to keep overrides in. Pick any
+4. Right-click the `VR1574197275.mvmmoclient.js` request and choose **Override content**.
+   <img width="441" height="423" alt="image" src="https://github.com/user-attachments/assets/2402f818-71f1-4af2-a7c2-76230be2fd12" />
+   
+6. The first time, Chrome asks for a folder to keep overrides in. Pick any
    empty folder and click **Allow**.
-5. Replace everything in the file that opens with the contents of the
-   downloaded file, then press **Ctrl+S**.
-6. Reload the game **with DevTools open**.
+   <img width="940" height="519" alt="image" src="https://github.com/user-attachments/assets/c14b6a45-cbee-4301-ba97-e863e6fc6232" />
+   
+7. Inside the folder you chose, open the starbreak.com folder.  Then delete the `VR1574197275.mvmmoclient.js` file that is in there, and
+   replace it with the file you downloaded in Step 1.
+<img width="529" height="236" alt="image" src="https://github.com/user-attachments/assets/1aec1047-c3a0-428c-ac3e-9c4da1090520" />
 
-If it worked, the console shows `[WebBreak] beta 2 by Dr. Jekyll loaded`, and
-the bottom left of the main menu reads `… + SBPE WebBreak beta 2 by Dr. Jekyll`.
+8. Reload the game **with DevTools open.  Overrides only apply while DevTools is open.** Close DevTools and the game will load
+   normally, without WebBreak
 
-> **Overrides only apply while DevTools is open.** Close DevTools and the
-> game loads normally, without WebBreak.
+If it worked, the console shows `[WebBreak] beta by Dr. Jekyll loaded`, and
+the bottom left of the main menu reads `… + SBPE WebBreak beta by Dr. Jekyll`.
 
 ### When StarBreak updates
 
@@ -81,12 +85,14 @@ Keybinds are ignored while you're typing in chat.
 
 ## Configure
 
+**I have not done much testing modifying the config values.  Proceed with caution.**
+
 The config sits at the very top of the WebBreak file, in SBPE's
 `config.ini` format. To change it:
 
-1. Open the override in DevTools: **Sources → Overrides**.
-2. Edit the values, then press **Ctrl+S**.
-3. Reload the game.
+1.  Open `VR1574197275.mvmmoclient.js` in your favorite text editor.
+2.  Edit the values at the top of the file then save the file.
+3.  Reload the StarBreak page.
 
 The plugins come right after the config, one block each, if you want to
 tweak them.
@@ -117,10 +123,8 @@ For what each option does, see the comments in the config and
 
 ### Differences from desktop SBPE
 
-- `misc` does not disable the idle kick (autokick), unlike SBPE.
 - `misc` `fixed_window` (borderless window placement) does nothing in a browser.
 - `zoom` `fast` does nothing. The game always does its normal relayout when zooming.
-- `extra_info` has `show_enemy_hp`, `show_object_hp` and `show_ally_hp` in place of SBPE's single `show_hp`.
 - `[general]` (game path, mipmaps, keep_open) is not used.
 
 ## Credits
@@ -128,6 +132,4 @@ For what each option does, see the comments in the config and
 - **WebBreak** and **ally_opacity** by Dr. Jekyll.
 - **SBPE** and the original plugins by [atomizer](https://github.com/atomizer/sbpe).
   WebBreak's plugins are JavaScript ports of them.
-- **Alexrns**, whose advanced_hp plugin's enemy / object / ally options
-  inspired extra_info's split HP options.
-- StarBreak is made by Crunchy Leaf Games. This is an unofficial fan project.
+- StarBreak is made by Crunchy Games. This is an unofficial fan project.
